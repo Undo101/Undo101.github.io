@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+
+    
+      <link rel="icon" href="/images/logo.svg" />
+    
+
+    <title>
+        
+          pictureEdit - Undo Blog
+        
+    </title>
+
+    <!-- Spectre.css framework -->
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-exp.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre-icons.min.css">
+
+    <!-- theme css & js -->
+    
+<link rel="stylesheet" href="/css/book.css">
+
+    
+<script src="/js/book.js"></script>
+
+
+    <!-- tocbot -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.4.2/tocbot.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.4.2/tocbot.css">
+    
+    <!-- katex -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+
+    
+    
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zooming/2.1.1/zooming.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const zooming = new Zooming()
+    zooming.listen('.book-content img')
+})
+</script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+
+<div class="book-container">
+  <div class="book-sidebar">
+    <div class="book-brand">
+  <a href="/">
+    <img src="/images/logo.svg">
+    <span>UNDO BLOG</span>
+  </a>
+</div>
+    <div class="book-menu">
+  
+</div>
+
+
+<script src="/js/book-menu.js"></script>
+
+  </div>
+
+  <div class="sidebar-toggle" onclick="sidebar_toggle()" onmouseover="add_inner()" onmouseleave="remove_inner()">
+  <div class="sidebar-toggle-inner"></div>
+</div>
+
+<script>
+function add_inner() {
+  let inner = document.querySelector('.sidebar-toggle-inner')
+  inner.classList.add('show')  
+}
+
+function remove_inner() {
+  let inner = document.querySelector('.sidebar-toggle-inner')
+  inner.classList.remove('show')
+}
+
+function sidebar_toggle() {
+    let sidebar_toggle = document.querySelector('.sidebar-toggle')
+    let sidebar = document.querySelector('.book-sidebar')
+    let content = document.querySelector('.off-canvas-content')
+    if (sidebar_toggle.classList.contains('extend')) { // show
+        sidebar_toggle.classList.remove('extend')
+        sidebar.classList.remove('hide')
+        content.classList.remove('extend')
+    }
+    else { // hide
+        sidebar_toggle.classList.add('extend')
+        sidebar.classList.add('hide')
+        content.classList.add('extend')
+    }
+}
+</script>
+
+  <div class="off-canvas-content">
+    <div class="columns">
+      <div class="column col-10 col-lg-12">
+        <div class="book-navbar">
+          <!-- For Responsive Layout -->
+
+<header class="navbar">
+  <section class="navbar-section">
+    <a onclick="open_sidebar()">
+      <i class="icon icon-menu"></i>
+    </a>
+  </section>
+</header>
+
+        </div>
+        <div class="book-content">
+          <div class="book-post">
+  <h2 id="功能点梳理">功能点梳理</h2>
+<ul>
+<li>
+<p>生成图片<br>
+svg-&gt; canvas -&gt;img</p>
+</li>
+<li>
+<p>旋转<br>
+svg(resize)<br>
+svg_image(rotate)</p>
+</li>
+<li>
+<p>涂鸦</p>
+<ul>
+<li>涂鸦-原倍数<br>
+target: svg<br>
+EventListener: touchStart-touchMove-touchEnd<br>
+touches: 1-1-1<br>
+operate: [‘draw’] -&gt; ‘draw’</li>
+<li>涂鸦-非原倍数</li>
+<li>撤回<br>
+delete the last path node<br>
+cut down the drawCount</li>
+</ul>
+</li>
+<li>
+<p>缩放</p>
+<ul>
+<li>缩小放大<br>
+target: svg<br>
+EventListener: touchStart-touchMove-touchEnd<br>
+touches: 2-2-1<br>
+operate: [‘draw’, ‘scale’, ‘move’, ‘drag’] -&gt; ‘scale’</li>
+<li>移动<br>
+target: svg<br>
+EventListener: touchStart-touchMove-touchEnd<br>
+touches: 1-1-1<br>
+operate: [‘scale’, ‘move’] -&gt; ‘move’</li>
+</ul>
+</li>
+<li>
+<p>文字</p>
+<ul>
+<li>文字-创建</li>
+<li>文字-再编辑</li>
+<li>文字-删除</li>
+<li>文字-拖拽
+<blockquote>
+<p>target: textBgBlock*Id<br>
+EventListener: touchStart-touchMove-touchEnd<br>
+touches: 1-1-1<br>
+operate: UnChange</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>
+<p>置空</p>
+</li>
+<li>
+<p>返回</p>
+</li>
+<li>
+<p>完成</p>
+</li>
+</ul>
+<h2 id="touch-事件梳理">touch 事件梳理</h2>
+<p><img src="../images/PES/touch.png" alt="touch"></p>
+<p>*手式切换会触发的事件流注释：TouchEvent(touches)</p>
+<p>a. TStart(1)-&gt;TMove(1)-&gt;TStart(2)-&gt;TMove(2) -&gt; TEnd * 2;<br>
+b. TStart(2)-&gt;TMove(2)-&gt;TEnd _ 1 -&gt;TMove(1) -&gt; TEnd _ 1;<br>
+c. TStart(1)-&gt;TMove(1)-&gt;TStart(2)-&gt;TMove(2) -&gt; TEnd * 2;</p>
+<h2 id="具体实现">具体实现</h2>
+<h3 id="缩放">缩放</h3>
+<blockquote>
+<p>判定当前操作为缩放的条件：event.target 是 svg，event.touches.length &gt; 2;</p>
+</blockquote>
+<h4 id="touchStart">touchStart:</h4>
+<ul>
+<li>startDistance：双指起始距离</li>
+<li>centerPoint：svg 中心点坐标</li>
+<li>currentOperate：‘scale’</li>
+</ul>
+<h4 id="touchMove">touchMove:</h4>
+<ul>
+<li>oStopDistance: move 时当前双指距离</li>
+<li>oScale: move 时双指当前缩放比例（oStopDistance / startDistance）</li>
+<li>lastScale: 手指离开时的最后缩放比例，全局变量，默认为 1</li>
+<li>currentScale: 当前缩放比例（lastScale * oScale）</li>
+<li>oOffsetX, oOffsetY：svg 在 x 或 y 轴方向的偏移量</li>
+<li>maxOffsetX, maxOffsetX: svg 在 x 或 y 轴方向的最大偏移量</li>
+<li>scale: 双指操作时的实时缩放比例 (nowScale)</li>
+<li>offsetX, offsetY: move 时当前的偏移量(offsetX, offsetY)</li>
+</ul>
+<p>【实现思路】</p>
+<p>控制 scale 的同时处理 translate，达到视觉上放大的中心点在两指之间。</p>
+<ol>
+<li>
+<p>缩放比例累乘。</p>
+</li>
+<li>
+<p>判断缩放比例范围(绝对值范围：(1 ~ maxScale-0.2)；maxScale：todo 暂定为 3 )。</p>
+</li>
+<li>
+<p>计算 x、y 轴方向的偏移量(oOffsetX, oOffsetY)。</p>
+</li>
+<li>
+<p>计算 x、y 轴方向的最大偏移量(maxOffsetX, maxOffsetY)。</p>
+</li>
+<li>
+<p>在最大偏移量的范围内，确认 x、y 轴方向的偏移量。</p>
+</li>
+<li>
+<p>设置 svg 的 attribute: transform: scale(${currentScale}) translate(${oOffsetX}, ${oOffsetY});。<br>
+【更正】：svg中transform对Android6一下以及ios12一下都不兼容，所以将svg上的transform变换迁移到svg的父容器上，即 设置id为mainContainer的节点style: tranform: scale(${currentScale}) translate(${oOffsetX}px, ${oOffsetY}px);。</p>
+</li>
+<li>
+<p>更新缩放相关变量。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">setScaleAnimation(oScale) &#123;</span><br><span class="line">  <span class="keyword">let</span> currentScale = lastScale * oScale;</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">Math</span>.abs(currentScale) &gt; <span class="number">1</span> &amp;&amp; <span class="built_in">Math</span>.abs(currentScale) &lt; <span class="keyword">this</span>.state.maxScale - <span class="number">0.2</span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> oOffsetX =</span><br><span class="line">    oScale === <span class="number">1</span> ? lastTranslate.x : ((<span class="number">1</span> - currentScale) * (origin.x - centerPoint.x) + lastTranslate.x) / currentScale;</span><br><span class="line">    <span class="keyword">let</span> oOffsetY =</span><br><span class="line">    oScale === <span class="number">1</span> ? lastTranslate.y : ((<span class="number">1</span> - currentScale) * (origin.y - centerPoint.y) + lastTranslate.y) / currentScale;</span><br><span class="line">    <span class="keyword">let</span> maxOffsetX =</span><br><span class="line">    (<span class="built_in">Math</span>.abs(<span class="keyword">this</span>.state.svgSize.width * lastScale - <span class="keyword">this</span>.state.wrapSize.width) / <span class="number">2</span> / currentScale) *</span><br><span class="line">    (oOffsetX / <span class="built_in">Math</span>.abs(oOffsetX));</span><br><span class="line">    <span class="keyword">let</span> maxOffsetY =</span><br><span class="line">    (<span class="built_in">Math</span>.abs(<span class="keyword">this</span>.state.svgSize.height * lastScale - <span class="keyword">this</span>.state.wrapSize.height) / <span class="number">2</span> / currentScale) *</span><br><span class="line">    (oOffsetY / <span class="built_in">Math</span>.abs(oOffsetY));</span><br><span class="line">    oOffsetY = <span class="built_in">Math</span>.abs(oOffsetY) &gt; <span class="built_in">Math</span>.abs(maxOffsetY) ? maxOffsetY : oOffsetY;</span><br><span class="line">    oOffsetX = <span class="built_in">Math</span>.abs(oOffsetX) &gt; <span class="built_in">Math</span>.abs(maxOffsetX) ? maxOffsetX : oOffsetX;</span><br><span class="line">    currentTranslate = <span class="keyword">this</span>.getPoint2D(oOffsetX, oOffsetY);</span><br><span class="line">    <span class="built_in">document</span></span><br><span class="line">      .getElementById(<span class="string">'mainContainer'</span>)</span><br><span class="line">      .setAttribute(<span class="string">'style'</span>,<span class="string">`transform: scale(<span class="subst">$&#123;currentScale&#125;</span>) translate(<span class="subst">$&#123;oOffsetX&#125;</span>, <span class="subst">$&#123;oOffsetY&#125;</span>)`</span>);</span><br><span class="line">    scale = currentScale;</span><br><span class="line">    offsetX = oOffsetX;</span><br><span class="line">    offsetY = oOffsetY;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>【图解】</p>
+<blockquote>
+<p>注意：与 css 中不同的是，在 svg 中的 translate 是不受 scale 影响的，所以在计算偏移时，需要将偏移量还原一个缩放比例，沿用 canvas 图，思路是一致的，但是图解中没有还原缩放比例，具体可以看代码。</p>
+</blockquote>
+<p><img src="../images/PES/analysis.jpeg" alt="解析"></p>
+</li>
+</ol>
+<h4 id="touchEnd：">touchEnd：</h4>
+<p>更新本次缩放相关参数：<br>
+lastScale = scale;<br>
+lastTranslate = currentTranslate;</p>
+<h3 id="移动">移动</h3>
+<blockquote>
+<p>判定当前操作为移动的条件：</p>
+<ul>
+<li>event.target 是 svg；</li>
+<li>event.touches.length = 1；</li>
+<li>从 start 到 move 的时间间隔大于 200ms；</li>
+<li>currentOperate 的值是’move’或’scale’。</li>
+</ul>
+</blockquote>
+<h4 id="touchStart-v2">touchStart:</h4>
+<ul>
+<li>moveStartStamp: 移动操作的起始时间。</li>
+<li>moveStart：移动时的起始坐标，即手指落屏的坐标点(screenX, screenY)。</li>
+<li>currentOperate： ‘scale’ -&gt; ‘move’。</li>
+</ul>
+<h4 id="touchMove-v2">touchMove:</h4>
+<p>moveStartStamp = 0;<br>
+计算并更新 svg 的 attribute，transform: translate；<br>
+【具体实现】</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">moving(e) &#123;</span><br><span class="line">   <span class="keyword">this</span>.state.currentOperate !== <span class="string">'move'</span> &amp;&amp; <span class="keyword">this</span>.setState(&#123; <span class="attr">currentOperate</span>: <span class="string">'move'</span> &#125;);</span><br><span class="line">   <span class="keyword">let</span> oOffsetY = ((e.touches[<span class="number">0</span>].screenY - moveStart.y) _ scale) / <span class="number">2</span> + lastTranslate.y;</span><br><span class="line">   <span class="keyword">let</span> oOffsetX = ((e.touches[<span class="number">0</span>].screenX - moveStart.x) _ scale) / <span class="number">2</span> + lastTranslate.x;</span><br><span class="line">   <span class="keyword">let</span> maxOffsetX =</span><br><span class="line">   (<span class="built_in">Math</span>.abs(<span class="keyword">this</span>.state.svgSize.width \* lastScale - <span class="keyword">this</span>.state.wrapSize.width) / <span class="number">2</span> / lastScale) \_</span><br><span class="line">   (oOffsetX / <span class="built_in">Math</span>.abs(oOffsetX));</span><br><span class="line">   <span class="keyword">let</span> maxOffsetY =</span><br><span class="line">   (<span class="built_in">Math</span>.abs(<span class="keyword">this</span>.state.svgSize.height \_ lastScale - <span class="keyword">this</span>.state.wrapSize.height) / <span class="number">2</span> / lastScale) \*</span><br><span class="line">   (oOffsetY / <span class="built_in">Math</span>.abs(oOffsetY));</span><br><span class="line">   oOffsetY = <span class="built_in">Math</span>.abs(oOffsetY) &gt; <span class="built_in">Math</span>.abs(maxOffsetY) ? maxOffsetY : oOffsetY;</span><br><span class="line">   oOffsetX = <span class="built_in">Math</span>.abs(oOffsetX) &gt; <span class="built_in">Math</span>.abs(maxOffsetX) ? maxOffsetX : oOffsetX;</span><br><span class="line">   offsetX = oOffsetX;</span><br><span class="line">   offsetY = oOffsetY;</span><br><span class="line">   <span class="built_in">document</span>.getElementById(<span class="string">'mainContainer'</span>).setAttribute(<span class="string">'style'</span>, <span class="string">`transform: scale(<span class="subst">$&#123;lastScale&#125;</span>) translate(<span class="subst">$&#123;offsetX&#125;</span>, <span class="subst">$&#123;offsetY&#125;</span>)`</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="touchEnd">touchEnd:</h4>
+<p>更新 lastTranslate: lastTranslate = this.getPoint2D(offsetX, offsetY);</p>
+<h3 id="涂鸦">涂鸦</h3>
+<blockquote>
+<p>判定当前操作为涂鸦的条件：</p>
+<ul>
+<li>event.target 是 svg;</li>
+<li>event.touches.length = 1；</li>
+<li>currentOperate 的值是’draw’。</li>
+</ul>
+</blockquote>
+<h4 id="touchStart-v3">touchStart:</h4>
+<ul>
+<li>oTouchStart: 手指第一下落屏的坐标；</li>
+<li>oDrawStartStamp：手指第一下落屏的时间；</li>
+<li>strokeWidth: 涂鸦画笔的粗细，(5/scale).tostring();</li>
+<li>currentPath: 创建一个 ‘path’ 节点， 并设置一系列属性，例如 class、stroke-linejoin、stroke-width、stroke-opacity、stroke、fill、fill-opacity、pointer-events 等；</li>
+<li>moveTo: path 标签的 d 属性中的 “M” 值('M ’ + oTouchStart.x + ‘,’ + oTouchStart.y);</li>
+<li>currentPathdTo: currentPathdTo: path 标签的 d 属性 (moveTo);</li>
+</ul>
+<p>为 currentPath 设置 d 属性，并将 currentPath 添加到 svg 中<br>
+更新 state 中的 touchStart、drawStartStamp<br>
+【具体实现】</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> p_x = (e.touches[<span class="number">0</span>].pageX - rect.left) / scale;</span><br><span class="line"><span class="keyword">let</span> p_y = (e.touches[<span class="number">0</span>].pageY - rect.top) / scale;</span><br><span class="line"><span class="keyword">let</span> oTouchStart = <span class="keyword">this</span>.getPoint2D(p_x, p_y);</span><br><span class="line"><span class="keyword">let</span> oDrawStartStamp = <span class="keyword">new</span> <span class="built_in">Date</span>().getTime();</span><br><span class="line"><span class="keyword">let</span> strokeWidth = (<span class="number">5</span> / scale).toString();</span><br><span class="line">currentPath = <span class="built_in">document</span>.createElementNS(<span class="string">"http://www.w3.org/2000/svg"</span>, <span class="string">"path"</span>);</span><br><span class="line">currentPath.setAttribute(<span class="string">"class"</span>, <span class="string">"draw-path"</span>);</span><br><span class="line">currentPath.setAttribute(<span class="string">"stroke-linejoin"</span>, <span class="string">"round"</span>);</span><br><span class="line">currentPath.setAttribute(<span class="string">"stroke-width"</span>, strokeWidth);</span><br><span class="line">currentPath.setAttribute(<span class="string">"stroke"</span>, <span class="string">"#FF3D3D"</span>);</span><br><span class="line">currentPath.setAttribute(<span class="string">"fill"</span>, <span class="string">"#ffffff"</span>);</span><br><span class="line">currentPath.setAttribute(<span class="string">"stroke-opacity"</span>, <span class="string">"1"</span>);</span><br><span class="line">currentPath.setAttribute(<span class="string">"fill-opacity"</span>, <span class="string">"0"</span>);</span><br><span class="line">currentPath.setAttribute(<span class="string">"pointer-events"</span>, <span class="string">"none"</span>);</span><br><span class="line"><span class="keyword">let</span> moveTo = <span class="string">"M "</span> + oTouchStart.x + <span class="string">","</span> + oTouchStart.y;</span><br><span class="line">currentPathdTo = moveTo;</span><br><span class="line">currentPath.setAttribute(<span class="string">"d"</span>, moveTo);</span><br><span class="line">svgDom.appendChild(currentPath);</span><br><span class="line"><span class="keyword">this</span>.setState(&#123; <span class="attr">touchStart</span>: oTouchStart, <span class="attr">drawStartStamp</span>: oDrawStartStamp &#125;);</span><br></pre></td></tr></table></figure>
+<h4 id="touchMove-v3">touchMove</h4>
+<ul>
+<li>x: 手指相对 svg 偏移、缩放后的 x 坐标;</li>
+<li>y: 手指相对 svg 偏移、缩放后的 y 坐标;</li>
+<li>LineTo: 当前绘制的 path 标签中 d 属性的 “L” 值。拼接在 M 值后面('L ’ + x + ‘,’ + y);</li>
+<li>currentPathdTo: 拼接“LineTo” ( ’ ’ + LineTo);</li>
+</ul>
+<p>将 currentPathdTo 的值更新到 svg 的属性 d 中。</p>
+<h4 id="touchEnd-v2">touchEnd:</h4>
+<ol>
+<li>比较当前时间与 drawStartStamp 的时间差，大于 200 则算为一次涂鸦操作；</li>
+<li>清空临时存储 path“d”属性的变量值 currentPathdTo；</li>
+<li>更新 currentPathdTo、drawStartStamp、drawCount;</li>
+<li>禁用旋转功能 rotateForbidden =&gt; true;</li>
+</ol>
+<h3 id="文字拖拽">文字拖拽</h3>
+<blockquote>
+<p>判定当前为文字拖拽操作的条件：event.target 是 svg;</p>
+</blockquote>
+<h4 id="touchStart-v4">touchStart:</h4>
+<p>dragStartStamp: 手指第一下落在文字上的时间戳；<br>
+pathDis: 手指落下时的位置相对文字左上角的偏移量；</p>
+<h4 id="touchMove-v4">touchMove:</h4>
+<ol>
+<li>判断当前时间戳与 dragStartStamp 的差值是否大于 299；</li>
+<li>判断当前是否存在文字被选中，有则取消选择；</li>
+<li>判断当前的 scale 是否为 1，若不等于 1 则对缩放移动等状态进行重置；</li>
+<li>计算文字相对与左上角的偏移量(x,y);<br>
+a. x: e.touches[0].pageX - this.state.pathDis.x - svgDom.getBoundingClientRect().left;<br>
+b. y: e.touches[0].pageY - this.state.pathDis.y - svgDom.getBoundingClientRect().top;</li>
+<li>判断偏移量是否超出边界(xMax, yMax), 超出则直接将最小值(0,0)或最大值赋值给(x,y);<br>
+a. xMax: this.state.svgSize.width - e.target.getBoundingClientRect().width;<br>
+b. yMax: this.state.svgSize.height - e.target.getBoundingClientRect().height;</li>
+<li>获取当前被拖拽的文字 id，并通过 getElementById 获取该对象，更新该对象及对象内部每一行文字的两个 attribute：x、y，需要加上边距偏移；<br>
+【具体实现】</li>
+</ol>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">dragging(e) &#123;</span><br><span class="line">  <span class="keyword">let</span> x = e.touches[<span class="number">0</span>].pageX - <span class="keyword">this</span>.state.pathDis.x - svgDom.getBoundingClientRect().left;</span><br><span class="line">  <span class="keyword">let</span> y = e.touches[<span class="number">0</span>].pageY - <span class="keyword">this</span>.state.pathDis.y - svgDom.getBoundingClientRect().top;</span><br><span class="line">  <span class="keyword">let</span> xMax = <span class="keyword">this</span>.state.svgSize.width - e.target.getBoundingClientRect().width,</span><br><span class="line">  yMax = <span class="keyword">this</span>.state.svgSize.height - e.target.getBoundingClientRect().height;</span><br><span class="line">  x &lt; <span class="number">0</span> &amp;&amp; (x = <span class="number">0</span>);</span><br><span class="line">  y &lt; <span class="number">0</span> &amp;&amp; (y = <span class="number">0</span>);</span><br><span class="line">  x &gt; xMax &amp;&amp; (x = xMax);</span><br><span class="line">  y &gt; yMax &amp;&amp; (y = yMax);</span><br><span class="line">  <span class="keyword">let</span> textIndex = e.target.id.slice(<span class="number">11</span>, e.target.id.length);</span><br><span class="line">  <span class="keyword">let</span> textLines = <span class="keyword">this</span>.state.annotationList[textIndex - <span class="number">1</span>].lineList;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> line <span class="keyword">in</span> textLines) &#123;</span><br><span class="line">    <span class="comment">// let lineIndex = line.slice(11, line.length);</span></span><br><span class="line">    <span class="built_in">document</span>.getElementById(<span class="string">`textContent<span class="subst">$&#123;textIndex&#125;</span>-<span class="subst">$&#123;line&#125;</span>`</span>).setAttribute(<span class="string">'x'</span>, <span class="built_in">String</span>(x + <span class="number">8</span>));</span><br><span class="line">    <span class="built_in">document</span></span><br><span class="line">    .getElementById(<span class="string">`textContent<span class="subst">$&#123;textIndex&#125;</span>-<span class="subst">$&#123;line&#125;</span>`</span>)</span><br><span class="line">    .setAttribute(<span class="string">'y'</span>, <span class="built_in">String</span>(y + <span class="number">23.5</span> + <span class="number">27</span> \* <span class="built_in">Number</span>(line)));</span><br><span class="line">  &#125;</span><br><span class="line">  e.target.setAttribute(<span class="string">'x'</span>, x);</span><br><span class="line">  e.target.setAttribute(<span class="string">'y'</span>, y);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="touchEnd-v3">touchEnd:</h4>
+<p>当前时间戳与 dragStartStamp 的差值大于 299，更新 annotationList 中对应的 annotation 对象定位(x, y);</p>
+<h3 id="置空">置空</h3>
+<p>产品逻辑：</p>
+<ul>
+<li>未批改进入 -&gt; 无置空按钮</li>
+<li>已批改进入 -&gt; 有置空按钮</li>
+<li>有操作(旋转、文字、涂鸦)之后出现置空按钮-&gt; 执行置空之后无置空按纽</li>
+</ul>
+<p>【具体实现】</p>
+<ol>
+<li>移除 svg 中所有的涂鸦(path)和文字(g&gt;rect&gt;text)；</li>
+<li>加载未修改过的图片，加载完成之后根据图片尺寸、手机屏幕尺寸计算 svg 尺寸；</li>
+<li>清除 svg 上的 transform 属性;</li>
+<li>初始化所有操作会改变的 state 数据(imgUrl, canClearAll, rotateForbidden, rotateAngle, rotateCount, imgPosition, drawCount)和全局变量(lastScale, lastTranslate, centerPoint, moveStartStamp, startDistance, origin, scale, moveStart)</li>
+</ol>
+<h3 id="完成">完成</h3>
+<p>引入 canvg 插件，将 svg 转为 canvas，再将 canvas 转为 img。svg 转为 canvas 时将图片的尺寸放大 dpr 倍，以保证最后生成图片的清晰度清晰度。<br>
+【具体实现】</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">svgToImg(svgNode) &#123;</span><br><span class="line">  <span class="keyword">const</span> pluginShapeNode = svgNode.parentNode;</span><br><span class="line">  <span class="keyword">const</span> pluginNode = pluginShapeNode.parentNode;</span><br><span class="line">  <span class="keyword">const</span> canvas = <span class="built_in">document</span>.getElementById(<span class="string">'iCanvas'</span>) <span class="keyword">as</span> HTMLCanvasElement;</span><br><span class="line">  <span class="keyword">const</span> ctx = canvas.getContext(<span class="string">'2d'</span>);</span><br><span class="line">  <span class="keyword">let</span> dpr = <span class="built_in">window</span>.devicePixelRatio;</span><br><span class="line">  svgNode.setAttribute(<span class="string">'crossOrigin'</span>, <span class="string">'Anonymous'</span>);</span><br><span class="line">  <span class="keyword">let</span> svnStr = <span class="keyword">new</span> XMLSerializer().serializeToString(svgNode);</span><br><span class="line">  <span class="keyword">let</span> oWidth: number = <span class="built_in">parseInt</span>(pluginNode.clientWidth) _ dpr,</span><br><span class="line">  oHeight: number = <span class="built_in">parseInt</span>(pluginNode.clientHeight) _ dpr;</span><br><span class="line">  canvas.width = oWidth;</span><br><span class="line">  canvas.height = oHeight;</span><br><span class="line">  <span class="keyword">let</span> oImgSize = <span class="keyword">this</span>.state.svgSize;</span><br><span class="line">  <span class="comment">// Create Canvg isntance from SVG source string. Scales vertically to height. Scales horizontally to width.</span></span><br><span class="line">  <span class="keyword">let</span> v = canvg.fromString(ctx, svnStr, &#123;</span><br><span class="line">    scaleWidth: oImgSize.width _ <span class="keyword">this</span>.state.dpr,</span><br><span class="line">    scaleHeight: oImgSize.height _ <span class="keyword">this</span>.state.dpr,</span><br><span class="line">    anonymousCrossOrigin: <span class="literal">true</span></span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="comment">// resize：Resize SVG to fit in given size.</span></span><br><span class="line">  v.resize(oImgSize.width _ <span class="keyword">this</span>.state.dpr, oImgSize.height _ <span class="keyword">this</span>.state.dpr, <span class="string">'xMinYMin meet'</span>);</span><br><span class="line">  <span class="comment">// Render only first frame, ignoring animations and mouse.</span></span><br><span class="line">  v.render(&#123;</span><br><span class="line">    enableRedraw: <span class="literal">true</span>,</span><br><span class="line">    scaleWidth: oImgSize.width _ <span class="keyword">this</span>.state.dpr,</span><br><span class="line">    scaleHeight: oImgSize.height _ <span class="keyword">this</span>.state.dpr,</span><br><span class="line">  &#125;).then(<span class="function"><span class="params">()</span> =&gt;</span> &#123;</span><br><span class="line">    svgNode.remove();</span><br><span class="line">    canvas.setAttribute(<span class="string">'style'</span>, <span class="string">`width: <span class="subst">$&#123;oImgSize.width&#125;</span>px; height: <span class="subst">$&#123;oImgSize.height&#125;</span>px;`</span>);</span><br><span class="line">    <span class="keyword">let</span> resultPic = canvas.toDataURL(<span class="string">'image/jpeg'</span>, <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">this</span>.props.editedImg(resultPic);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</div>
+
+
+  <div class="book-comments">
+    
+
+
+
+
+  </div>
+
+
+
+<script src="/js/book-post.js"></script>
+
+        </div>
+      </div>
+      <div class="column col-2 hide-lg">
+        <div class="book-post-info">
+  
+    <div class="book-post-meta">
+
+  <div class="author">
+
+    <!-- Author image -->
+    <div class="author-img">
+      
+        <figure
+          class="avatar avatar-lg"
+          data-initial="U"
+          style="background-color: #3b4351;">
+        </figure>
+      
+    </div>
+
+    <!-- Author title -->
+    <div class="author-title">
+      <div>Undo</div>
+      <div>2020-05-21</div>
+    </div>
+  </div>
+
+  
+    <div class="divider"></div>
+
+    <div class="link">
+      <a class="category-link" href="/categories/JS/">JS</a> <a class="category-link" href="/categories/JS/SVG/">SVG</a>
+
+      <a class="tag-link" href="/tags/SVG/" rel="tag">#SVG</a>
+    </div>
+    
+  
+
+  <div class="divider"></div>
+</div>
+  
+
+  <div class="book-tocbot">
+</div>
+<div class="book-tocbot-menu">
+  <a class="book-toc-expand" onclick="expand_toc()">Expand all</a>
+  <a onclick="go_top()">Back to top</a>
+  <a onclick="go_bottom()">Go to bottom</a>
+</div>
+
+
+<script src="/js/book-toc.js"></script>
+
+</div>
+      </div>
+    </div>
+  </div>
+  
+  <a class="off-canvas-overlay" onclick="hide_canvas()"></a>
+</div>
+
+</body>
+</html>
+
+
+<script src="/js/book.js"></script>
